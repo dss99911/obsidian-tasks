@@ -15,6 +15,8 @@ export type SuggestInfo = {
     insertSkip?: number;
     /** Text to match with the user input if matching against the display text is not desirable */
     textToMatch?: string;
+    
+    date?: string;
 };
 
 /*

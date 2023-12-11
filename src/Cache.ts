@@ -114,7 +114,8 @@ export class Cache {
         // Does not fire when starting up obsidian and only works for changes.
         const changedEventReference = this.metadataCache.on('changed', (file: TFile) => {
             this.tasksMutex.runExclusive(() => {
-                this.indexFile(file);
+                this.indexFile(file, true);
+
             });
         });
         this.metadataCacheEventReferences.push(changedEventReference);
@@ -131,7 +132,7 @@ export class Cache {
             this.logger.debug(`Cache.subscribeToVault.createdEventReference() ${file.path}`);
 
             this.tasksMutex.runExclusive(() => {
-                this.indexFile(file);
+                this.indexFile(file, true);
             });
         });
         this.vaultEventReferences.push(createdEventReference);
@@ -198,7 +199,7 @@ export class Cache {
 
             await Promise.all(
                 this.vault.getMarkdownFiles().map((file: TFile) => {
-                    return this.indexFile(file);
+                    return this.indexFile(file, false);
                 }),
             );
             this.state = State.Warm;
@@ -216,23 +217,15 @@ export class Cache {
             return;
         }
 
-        if (!file.path.endsWith('.md')) {
-            this.logger.debug('indexFile: skipping non-markdown file: ' + file.path);
-            return;
-        }
-
-        this.logger.debug('Cache.indexFile: ' + file.path);
-
-        const oldTasks = this.tasks.filter((task: Task) => {
-            return task.path === file.path;
-        });
+        this.logger.debug('Cache.indexFile: ' + filePath);
 
         const listItems = fileCache.listItems;
         // When there is no list items cache, there are no tasks.
         // Still continue to notify watchers of removal.
 
         let newTasks: Task[] = [];
-        if (listItems !== undefined) {
+        let hasTask = listItems !== undefined && listItems.some(listItem => listItem.task !== undefined);
+        if (hasTask) {
             // Only read the file and process for tasks if there are list items.
             const fileContent = await this.vault.cachedRead(file);
             newTasks = this.getTasksFromFileContent(fileContent, listItems, fileCache, file);
@@ -240,6 +233,9 @@ export class Cache {
 
         // If there are no changes in any of the tasks, there's
         // nothing to do, so just return.
+        const oldTasks = this.tasks.filter((task: Task) => {
+            return task.path === file.path;
+        });
         if (Task.tasksListsIdentical(oldTasks, newTasks)) {
             // This code kept for now, to allow for debugging during development.
             // It is too verbose to release to users.
@@ -267,9 +263,9 @@ export class Cache {
 
         this.tasks.push(...newTasks);
         this.logger.debug('Cache.indexFile: ' + file.path + `: read ${newTasks.length} task(s)`);
-
-        // All updated, inform our subscribers.
-        this.notifySubscribers();
+        if (notify) {
+            this.notifySubscribers();
+        }
     }
 
     private getTasksFromFileContent(

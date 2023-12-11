@@ -70,6 +70,11 @@ function addTaskPropertySuggestions(
     const genericSuggestions: SuggestInfo[] = [];
 
     // NEW_TASK_FIELD_EDIT_REQUIRED
+    if (!line.includes(symbols.scheduledDateSymbol))
+        genericSuggestions.push({
+            displayText: `${symbols.scheduledDateSymbol} scheduled date`,
+            appendText: `${symbols.scheduledDateSymbol} `,
+        });
     if (!line.includes(symbols.dueDateSymbol))
         genericSuggestions.push({
             displayText: `${symbols.dueDateSymbol} due date`,
@@ -80,11 +85,7 @@ function addTaskPropertySuggestions(
             displayText: `${symbols.startDateSymbol} start date`,
             appendText: `${symbols.startDateSymbol} `,
         });
-    if (!line.includes(symbols.scheduledDateSymbol))
-        genericSuggestions.push({
-            displayText: `${symbols.scheduledDateSymbol} scheduled date`,
-            appendText: `${symbols.scheduledDateSymbol} `,
-        });
+
     if (!hasPriority(line)) {
         genericSuggestions.push({
             displayText: `${symbols.prioritySymbols.High} high priority`,
@@ -184,7 +185,7 @@ function addDatesSuggestions(
         'next year',
     ];
 
-    const results: SuggestInfo[] = [];
+    let results: SuggestInfo[] = [];
     const dateRegex = new RegExp(`(${datePrefixRegex})\\s*([0-9a-zA-Z ]*)`, 'ug');
     const dateMatch = matchByPosition(line, dateRegex, cursorPos);
     if (dateMatch && dateMatch.length >= 2) {
@@ -202,11 +203,13 @@ function addDatesSuggestions(
         if (possibleDate && possibleDate.isValid()) {
             // Seems like the text that the user typed can be parsed as a valid date.
             // Present its completed form as a 1st suggestion
+            const formattedDate = possibleDate.format(TaskRegularExpressions.dateFormat)
             results.push({
-                displayText: `${possibleDate.format(TaskRegularExpressions.dateFormat)}`,
-                appendText: `${datePrefix} ${possibleDate.format(TaskRegularExpressions.dateFormat)} `,
+                displayText: formattedDate,
+                appendText: `${datePrefix} ${formattedDate} `,
                 insertAt: dateMatch.index,
                 insertSkip: dateMatch[0].length,
+                date: formattedDate,
             });
         }
 
@@ -224,11 +227,11 @@ function addDatesSuggestions(
                     dateString.length >= minMatch &&
                     value.toLowerCase().includes(dateString.toLowerCase()),
             )
-            .slice(0, maxGenericSuggestions);
         if (genericMatches.length === 0) {
             // Do completely generic date suggestions
-            genericMatches = genericSuggestions.slice(0, maxGenericSuggestions);
+            genericMatches = genericSuggestions
         }
+        // genericMatches = genericMatches.slice(0, maxGenericSuggestions);
         for (const match of genericMatches) {
             const parsedDate = DateParser.parseDate(match, true);
             const formattedDate = `${parsedDate.format(TaskRegularExpressions.dateFormat)}`;
@@ -238,9 +241,18 @@ function addDatesSuggestions(
                 appendText: `${datePrefix} ${formattedDate} `,
                 insertAt: dateMatch.index,
                 insertSkip: dateMatch[0].length,
+                date: formattedDate
             });
         }
     }
+    results = results.filter((info, index) => {
+        let value = info.date
+        let firstIndex = results
+            .map(m => m.date)
+            .indexOf(value);
+        return firstIndex === index;
+    });
+    results.sort((a, b) => a.date!.localeCompare(b.date!));
     return results;
 }
 

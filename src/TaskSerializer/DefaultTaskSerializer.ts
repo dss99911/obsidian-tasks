@@ -135,7 +135,7 @@ export class DefaultTaskSerializer implements TaskSerializer {
                     ? ' ' + createdDateSymbol
                     : ` ${createdDateSymbol} ${task.createdDate.format(TaskRegularExpressions.dateFormat)}`;
             case 'scheduledDate':
-                if (!task.scheduledDate || task.scheduledDateIsInferred) return '';
+                if (!task.scheduledDate) return '';
                 return layout.options.shortMode
                     ? ' ' + scheduledDateSymbol
                     : ` ${scheduledDateSymbol} ${task.scheduledDate.format(TaskRegularExpressions.dateFormat)}`;
