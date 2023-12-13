@@ -17,6 +17,7 @@ import { StatusSettings } from './Config/StatusSettings';
 import type { Task } from './Task';
 import { tasksApiV1 } from './Api';
 import { GlobalFilter } from './Config/GlobalFilter';
+import { replaceTaskWithTasks } from './File';
 
 export default class TasksPlugin extends Plugin {
     private cache: Cache | undefined;
@@ -92,5 +93,15 @@ export default class TasksPlugin extends Plugin {
 
     public getTasks(): Task[] | undefined {
         return this.cache?.getTasks();
+    }
+
+    async toogleTask(line: number, path: string) {
+        const condition = (task: Task) => task.taskLocation.path == path && task.taskLocation.lineNumber == line;
+
+
+        const task: Task = this.getTasks()!.filter(condition)[0]
+        const updatedTasks = task.toggle()
+
+        await replaceTaskWithTasks({ originalTask: task, newTasks: updatedTasks })
     }
 }
