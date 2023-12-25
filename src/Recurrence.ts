@@ -3,7 +3,7 @@ import type { Moment } from 'moment';
 // end-snippet
 
 import { RRule } from 'rrule';
-import { compareByDate } from './lib/DateTools';
+import { compareByDate, todayByActiveNote } from './lib/DateTools';
 
 export class Recurrence {
     private readonly rrule: RRule;
@@ -199,7 +199,8 @@ export class Recurrence {
         if (this.baseOnToday) {
             // The next occurrence should happen based off the current date.
             // begin-snippet: use-moment-in-src
-            const today = window.moment();
+            const today = todayByActiveNote();
+            
             // end-snippet
             return this.nextReferenceDateFromToday(today).toDate();
         } else {

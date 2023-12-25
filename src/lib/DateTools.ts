@@ -1,3 +1,6 @@
+import moment from 'moment';
+import { MarkdownView } from 'obsidian';
+
 export function compareByDate(a: moment.Moment | null, b: moment.Moment | null): -1 | 0 | 1 {
     if (a !== null && b === null) {
         return -1;
@@ -20,4 +23,16 @@ export function compareByDate(a: moment.Moment | null, b: moment.Moment | null):
     } else {
         return 0;
     }
+}
+
+export function todayByActiveNote() {
+    let activeFileName = app.workspace.getActiveViewOfType(MarkdownView)?.file?.basename
+    if (activeFileName) {
+        let activeFileMoment = moment(activeFileName)
+        if (activeFileMoment.isValid()) {
+            return activeFileMoment
+        }
+    }
+
+    return window.moment();
 }

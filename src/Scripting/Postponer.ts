@@ -19,12 +19,12 @@ export type HappensDate = keyof Pick<Task, 'startDate' | 'scheduledDate' | 'dueD
  * @param task
  */
 export function getDateFieldToPostpone(task: Task): HappensDate | null {
-    if (task.dueDate) {
-        return 'dueDate';
-    }
-
     if (task.scheduledDate) {
         return 'scheduledDate';
+    }
+    
+    if (task.dueDate) {
+        return 'dueDate';
     }
 
     if (task.startDate) {

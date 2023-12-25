@@ -1,4 +1,5 @@
 import type { Moment } from 'moment';
+
 import type { TaskLocation } from './TaskLocation';
 import type { Recurrence } from './Recurrence';
 import { getSettings, getUserSelectedTaskFormat } from './Config/Settings';
@@ -7,6 +8,7 @@ import { StatusRegistry } from './StatusRegistry';
 import type { Status } from './Status';
 import { Urgency } from './Urgency';
 import { DateFallback } from './DateFallback';
+import { todayByActiveNote } from './lib/DateTools';
 import { compareByDate } from './lib/DateTools';
 import { TasksDate } from './Scripting/TasksDate';
 import { StatusType } from './StatusConfiguration';
@@ -396,7 +398,7 @@ export class Task {
             // Set done date only if setting value is true
             const { setDoneDate } = getSettings();
             if (setDoneDate) {
-                newDoneDate = window.moment();
+                newDoneDate = todayByActiveNote()
             }
 
             // If this task is no longer todo, we need to check if it is recurring:
