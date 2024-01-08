@@ -85,7 +85,11 @@ function addTaskPropertySuggestions(
             displayText: `${symbols.startDateSymbol} start date`,
             appendText: `${symbols.startDateSymbol} `,
         });
-
+    if (!line.includes(symbols.recurrenceSymbol))
+        genericSuggestions.push({
+            displayText: `${symbols.recurrenceSymbol} recurring (repeat)`,
+            appendText: `${symbols.recurrenceSymbol} `,
+        });
     if (!hasPriority(line)) {
         genericSuggestions.push({
             displayText: `${symbols.prioritySymbols.High} high priority`,
@@ -108,11 +112,7 @@ function addTaskPropertySuggestions(
             appendText: `${symbols.prioritySymbols.Lowest} `,
         });
     }
-    if (!line.includes(symbols.recurrenceSymbol))
-        genericSuggestions.push({
-            displayText: `${symbols.recurrenceSymbol} recurring (repeat)`,
-            appendText: `${symbols.recurrenceSymbol} `,
-        });
+
     if (!line.includes(symbols.createdDateSymbol)) {
         const parsedDate = DateParser.parseDate('today', true);
         const formattedDate = parsedDate.format(TaskRegularExpressions.dateFormat);

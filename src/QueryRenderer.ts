@@ -6,7 +6,7 @@ import { GlobalFilter } from './Config/GlobalFilter';
 import { GlobalQuery } from './Config/GlobalQuery';
 import { DateFallback } from './DateFallback';
 import { getTaskLineAndFile, replaceTaskWithTasks } from './File';
-
+import { TasksDate } from './Scripting/TasksDate';
 import type { IQuery } from './IQuery';
 import { explainResults, getQueryForQueryRenderer } from './lib/QueryRendererHelper';
 import type { GroupDisplayHeading } from './Query/GroupDisplayHeading';
@@ -426,13 +426,21 @@ class QueryRenderChild extends MarkdownRenderChild {
 
             const postponeMenuItemCallback = (item: MenuItem, timeUnit: unitOfTime.DurationConstructor, amount = 1) => {
                 const amountOrArticle = amount > 1 ? amount : 'a';
-                item.setTitle(`${commonTitle} ${amountOrArticle} ${timeUnit}`).onClick(() =>
+
+                let dateToPostpone = task[getDateFieldToPostpone(task)!]!
+                let postponedDate = new TasksDate(dateToPostpone).postpone(timeUnit, amount)
+                let dateFormat = postponedDate.format('YYYY-MM-DD ddd')
+
+                item.setTitle(`${amountOrArticle} ${timeUnit} (${dateFormat})`).onClick(() =>
                     this.postponeOnClickCallback(button, task, amount, timeUnit),
                 );
             };
 
             menu.addItem((item) => postponeMenuItemCallback(item, 'days', 2));
             menu.addItem((item) => postponeMenuItemCallback(item, 'days', 3));
+            menu.addItem((item) => postponeMenuItemCallback(item, 'days', 4));
+            menu.addItem((item) => postponeMenuItemCallback(item, 'days', 5));
+            menu.addItem((item) => postponeMenuItemCallback(item, 'days', 6));
             menu.addItem((item) => postponeMenuItemCallback(item, 'week'));
             menu.addItem((item) => postponeMenuItemCallback(item, 'weeks', 2));
             menu.addItem((item) => postponeMenuItemCallback(item, 'month'));

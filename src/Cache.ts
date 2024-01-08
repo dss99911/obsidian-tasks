@@ -31,6 +31,8 @@ export class Cache {
     private readonly tasksMutex: Mutex;
     private state: State;
     private tasks: Task[];
+    // private taskCache: Map<string, string[]>;
+    // private taskCachePath: string;
 
     /**
      * We cannot know if this class will be instantiated because obsidian started
@@ -57,7 +59,8 @@ export class Cache {
         this.logger.debug('Cache.constructor(): state = Cold');
 
         this.tasks = [];
-
+        // this.taskCache = new Map();
+        // this.taskCachePath = `${vault.configDir}/tasks.txt`
         this.loadedAfterFirstResolve = false;
 
         this.subscribeToCache();
@@ -97,6 +100,8 @@ export class Cache {
             tasks: this.tasks,
             state: this.state,
         });
+
+        // this.scheduleWrite()
     }
 
     private subscribeToCache(): void {
@@ -120,6 +125,34 @@ export class Cache {
         });
         this.metadataCacheEventReferences.push(changedEventReference);
     }
+
+
+    // timeoutScheduled = false;
+    //
+    // private scheduleWrite() {
+    //     if (!this.timeoutScheduled) {
+    //         this.timeoutScheduled = true;
+    //
+    //         setTimeout(() => {
+    //             this.timeoutScheduled = false;
+    //             this.writeTasks()
+    //         }, 60 * 1000);  // 60 * 1000 milliseconds = 1 minute
+    //     }
+    // }
+    //
+    // private writeTasks() {
+    //     let lines = [];
+    //
+    //     for (let [filePath, values] of this.taskCache.entries()) {
+    //         let line = `${values[0]},${values[1]},${filePath}`;
+    //         lines.push(line)
+    //     }
+    //
+    //     this.vault.adapter.write(
+    //         this.taskCachePath,
+    //         lines.join("\n")
+    //     );
+    // }
 
     private subscribeToVault(): void {
         this.logger.debug('Cache.subscribeToVault()');
@@ -147,6 +180,8 @@ export class Cache {
                 this.tasks = this.tasks.filter((task: Task) => {
                     return task.path !== file.path;
                 });
+
+                // this.taskCache.delete(file.path)
 
                 this.notifySubscribers();
             });
@@ -176,6 +211,11 @@ export class Cache {
                         return task;
                     }
                 });
+                // const oldTaskCache = this.taskCache.get(oldPath)
+                // if (oldTaskCache !== undefined) {
+                //     this.taskCache.delete(oldPath)
+                //     this.taskCache.set(file.path, [file.stat.mtime.toString(), oldTaskCache[1]])
+                // }
 
                 this.notifySubscribers();
             });
@@ -197,6 +237,8 @@ export class Cache {
             this.state = State.Initializing;
             this.logger.debug('Cache.loadVault(): state = Initializing');
 
+            // await this.loadTaskCache()
+
             await Promise.all(
                 this.vault.getMarkdownFiles().map((file: TFile) => {
                     return this.indexFile(file, false);
@@ -211,7 +253,49 @@ export class Cache {
         });
     }
 
-    private async indexFile(file: TFile): Promise<void> {
+
+    // private async loadTaskCache() {
+    //     if (! await this.vault.adapter.exists(this.taskCachePath)) {
+    //         return;
+    //     }
+    //
+    //     let content = await this.vault.adapter.read(this.taskCachePath);
+    //     const lines = content.split('\n');
+    //
+    //     for (let line of lines) {
+    //         if (line === '') {
+    //             continue
+    //         }
+    //         let firstCommaIndex = line.indexOf(',');
+    //         let secondCommaIndex = line.indexOf(',', firstCommaIndex + 1);
+    //         let mtime = line.slice(0, firstCommaIndex);
+    //         let isTask = line.slice(firstCommaIndex + 1, secondCommaIndex);
+    //         let filePath = line.slice(secondCommaIndex + 1);
+    //         this.taskCache.set(filePath, [mtime, isTask])
+    //     }
+    // }
+
+    private async indexFile(file: TFile, notify: Boolean): Promise<void> {
+        const filePath = file.path
+
+        if (!filePath.endsWith('.md')) {
+            this.logger.debug('indexFile: skipping non-markdown file: ' + filePath);
+            return;
+        }
+
+        // if (this.taskCache.has(filePath)) {
+        //     const t = this.taskCache.get(filePath)
+        //     const mtime = t[0]
+        //     const isTask = t[1]
+        //     if (mtime === file.stat.mtime.toString()) {
+        //         if (isTask === '0') {
+        //             return;
+        //         } else {
+        //             // todo save task instead of is task. and convert it and return.
+        //         }
+        //     }
+        // }
+
         const fileCache = this.metadataCache.getFileCache(file);
         if (fileCache === null || fileCache === undefined) {
             return;
@@ -230,6 +314,8 @@ export class Cache {
             const fileContent = await this.vault.cachedRead(file);
             newTasks = this.getTasksFromFileContent(fileContent, listItems, fileCache, file);
         }
+
+        // this.taskCache.set(filePath, [file.stat.mtime.toString(), hasTask ? "1":"0"])
 
         // If there are no changes in any of the tasks, there's
         // nothing to do, so just return.
