@@ -425,7 +425,7 @@ class QueryRenderChild extends MarkdownRenderChild {
             const commonTitle = 'Postpone for';
 
             const postponeMenuItemCallback = (item: MenuItem, timeUnit: unitOfTime.DurationConstructor, amount = 1) => {
-                const amountOrArticle = amount > 1 ? amount : 'a';
+                const amountOrArticle = amount;
 
                 let dateToPostpone = task[getDateFieldToPostpone(task)!]!
                 let postponedDate = new TasksDate(dateToPostpone).postpone(timeUnit, amount)
@@ -436,6 +436,8 @@ class QueryRenderChild extends MarkdownRenderChild {
                 );
             };
 
+            menu.addItem((item) => postponeMenuItemCallback(item, 'days', 0));
+            menu.addItem((item) => postponeMenuItemCallback(item, 'days', 1));
             menu.addItem((item) => postponeMenuItemCallback(item, 'days', 2));
             menu.addItem((item) => postponeMenuItemCallback(item, 'days', 3));
             menu.addItem((item) => postponeMenuItemCallback(item, 'days', 4));
